@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+    <http:listener-config name="mulesoft-exercise-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    <apikit:config name="mulesoft-exercise-config" api="mulesoft-exercise.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="mulesoft-exercise-main">
+        <http:listener config-ref="mulesoft-exercise-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="mulesoft-exercise-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform doc:name="Bad request response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Not found response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform doc:name="Method not allowed response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform doc:name="Not acceptable response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform doc:name="Unsupported media type response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform doc:name="Not implemented response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="mulesoft-exercise-console">
+        <http:listener config-ref="mulesoft-exercise-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="mulesoft-exercise-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Not found response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\users:mulesoft-exercise-config">
+		<flow-ref doc:name="Initialize data" doc:id="5e22fdc6-c322-4d68-a4e8-21733ad29226" name="InitializeDataFlow" />
+		<flow-ref doc:name="Get users" doc:id="cc2c4a2d-8f47-4668-a195-bb163220b253" name="sf-get-users-orchestrator" />
+    </flow>
+    <flow name="post:\users:application\json:mulesoft-exercise-config">
+		<ee:transform doc:name="Set user" doc:id="6cd91e90-b138-4617-aa5d-96e8435666db" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="user" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Initialize data" doc:id="07c45804-742f-4935-9878-1b5076787c49" name="InitializeDataFlow" />
+		<flow-ref doc:name="Create user" doc:id="2e82dda5-4e3a-4085-84bd-b17315641a92" name="sf-create-user-orchestrator" />
+    </flow>
+	<flow name="InitializeDataFlow" doc:id="a7177536-7872-4066-b142-8c9b2b86063d" initialState="started" >
+		<os:contains doc:name="Contains" doc:id="347d23dd-41de-4656-b48e-664f5f8b16de" key="1" objectStore="Object_store" />
+		<choice doc:name="Choice" doc:id="80de1d18-5055-40c9-9cb3-153638619165" >
+			<when expression="#[payload != true]" >
+				<os:store doc:name="Store user 1" doc:id="e5fe932f-a536-46f4-a26d-f41a6ac66041" key="1" objectStore="Object_store" >
+					<os:value ><![CDATA[#[{'id':'1', 'name': 'John Doe', 'email': 'john.doe@example.com'}]]]></os:value>
+				</os:store>
+				<os:store doc:name="Store user 2" doc:id="65fe2a46-d365-4b0d-9a14-4fb19de832de" key="2" objectStore="Object_store" >
+					<os:value ><![CDATA[#[{'id':'2', 'name': 'Jane Smith', 'email': 'jane.smith@example.com'}]]]></os:value>
+				</os:store>
+				<os:store doc:name="Store user 3" doc:id="5f5649e9-77b3-4913-a0b9-51e6207acf29" key="3" objectStore="Object_store" >
+					<os:value ><![CDATA[#[{'id':'3', 'name': 'Joan Smith', 'email': 'joan.smith@example.com'}]]]></os:value>
+				</os:store>
+				<logger level="INFO" doc:name="Log Completion" doc:id="65ad7476-31d3-4d75-8efd-97debc62393b" message="Data initialized successfully." />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="113ef6a7-16c4-44e6-af0f-be7e9a7b13f1" message="Data already loaded" />
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

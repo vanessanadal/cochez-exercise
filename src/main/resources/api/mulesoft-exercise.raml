@@ -1,0 +1,85 @@
+#%RAML 1.0
+title: Mulesoft exercise
+version: v1
+baseUri: /api/v1
+mediaType: application/json
+
+types:
+  User:
+    type: object
+    properties:
+      name: string
+      email: string
+  UserComplete: 
+      type: object
+      properties:
+        id: string
+        name: string
+        email: string
+        address: object
+        phone: string
+        website: string
+        company: object
+
+/users:
+  get:
+    description: Retrieve a list of all users
+    responses:
+      200:
+        body:
+          application/json:
+            type: array
+            items: UserComplete
+            example: |
+              [
+                {
+                  "id": "1",
+                  "name": "John Doe",
+                  "email": "john.doe@example.com",
+                  "address": {
+                      "street": "Kulas Light",
+                      "suite": "Apt. 556",
+                      "city": "Gwenborough",
+                      "zipcode": "92998-3874",
+                      "geo": {
+                          "lat": "-37.3159",
+                          "lng": "81.1496"
+                      }
+                  },
+                  "phone": "1-770-736-8031 x56442",
+                  "website": "hildegard.org",
+                  "company": {
+                      "name": "Romaguera-Crona",
+                      "catchPhrase": "Multi-layered client-server neural-net",
+                      "bs": "harness real-time e-markets"
+                  }
+                }
+              ]
+
+  post:
+    description: Create a new user
+    body:
+      application/json:
+        type: object
+        properties:
+          name:
+            type: string
+            description: Name of the user
+            minLength: 1
+            required: true
+          email:
+            type: string
+            description: Email of the user
+            minLength: 1
+            pattern: '^[^@]+@[^@]+\.[^@]+$'
+            required: true
+    responses:
+      201:
+        body:
+          application/json:
+            type: User
+            example: |
+              {
+                "name": "Jane Doe",
+                "email": "jane.doe@example.com"
+              }
